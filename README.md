@@ -81,7 +81,14 @@ i-j
 
 ## Node js
 
-```
+```rust
 $ echo '(i+j)(k)' | ts-node index.ts
+i-j
+```
+
+## Rust
+
+```rust
+$ echo '(i+j)(k)' | cargo run
 i-j
 ```

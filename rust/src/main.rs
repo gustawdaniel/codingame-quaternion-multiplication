@@ -52,6 +52,32 @@ mod tests {
         assert_eq!(Quaternion::multiply_base('k', 'j'), SignedCoefficient { c: -1f64, d: 'i' });
         assert_eq!(Quaternion::multiply_base('k', 'k'), SignedCoefficient { c: -1f64, d: 'r' });
     }
+
+    #[test]
+    fn simple_multiply() {
+        let res = Quaternion::new(vec![String::from("1")])
+            .multiply(Quaternion::new(vec![String::from("1")]));
+
+        assert_eq!(res, Quaternion {
+            r: 1f64,
+            i: 0f64,
+            j: 0f64,
+            k: 0f64
+        })
+    }
+
+    #[test]
+    fn complex_multiply() {
+        let res = Quaternion::new(vec![String::from("2i"), String::from("2j")])
+            .multiply(Quaternion::new(vec![String::from("j"), String::from("1")]));
+
+        assert_eq!(res, Quaternion {
+            r: -2f64,
+            i: 2f64,
+            j: 2f64,
+            k: 2f64
+        })
+    }
 }
 
 #[derive(Debug)]
@@ -60,6 +86,12 @@ struct Quaternion {
     i: f64,
     j: f64,
     k: f64,
+}
+
+impl PartialEq<Quaternion> for Quaternion {
+    fn eq(&self, other: &Quaternion) -> bool {
+        self.r == other.r && self.i == other.i && self.j == other.j && self.k == other.k
+    }
 }
 
 #[derive(Debug)]
@@ -73,7 +105,6 @@ impl PartialEq<SignedCoefficient> for SignedCoefficient {
         self.c == other.c && self.d == other.d
     }
 }
-
 
 impl Quaternion {
     fn parse(input: &str) -> Vec<Quaternion> {
@@ -135,6 +166,39 @@ impl Quaternion {
             c: (if diff > 0 { -1f64 } else { 1f64 }) * (if (diff + 2i32) % 2 == 0 { -1f64 } else { 1f64 }),
             d: vec!['i', 'j', 'k'].iter().find(|&&e| e != a && e != b).unwrap().to_owned(),
         }
+    }
+
+    fn get(&self, key: char) -> f64 {
+        match key {
+            'r' => self.r,
+            'i' => self.i,
+            'j' => self.j,
+            'k' => self.k,
+            _ => 0f64
+        }
+    }
+
+    fn set(&mut self, key: char, value: f64) -> &Quaternion {
+        match key {
+            'r' => self.r = value,
+            'i' => self.i = value,
+            'j' => self.j = value,
+            'k' => self.k = value,
+            _ => ()
+        }
+
+        self
+    }
+
+    fn multiply(&self, a: Quaternion) -> Quaternion {
+        let mut res = Quaternion::new(vec![]);
+        for p in vec!['r', 'i', 'j', 'k'] {
+            for n in vec!['r', 'i', 'j', 'k'] {
+                let SignedCoefficient { c, d } = Quaternion::multiply_base(p, n);
+                res.set(d, res.get(d) + c * self.get(p) * a.get(n));
+            }
+        }
+        res
     }
 }
 
