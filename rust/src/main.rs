@@ -3,7 +3,7 @@ use regex::Regex;
 
 #[cfg(test)]
 mod tests {
-    use crate::Quaternion;
+    use crate::{Quaternion, SignedCoefficient};
 
     #[test]
     fn simple_parse() {
@@ -29,6 +29,29 @@ mod tests {
         assert_eq!(qs[1].j, -8.4f64);
         assert_eq!(qs[1].k, 1f64);
     }
+
+    #[test]
+    fn multiply_base() {
+        assert_eq!(Quaternion::multiply_base('r', 'r'), SignedCoefficient { c: 1f64, d: 'r' });
+        assert_eq!(Quaternion::multiply_base('r', 'i'), SignedCoefficient { c: 1f64, d: 'i' });
+        assert_eq!(Quaternion::multiply_base('r', 'j'), SignedCoefficient { c: 1f64, d: 'j' });
+        assert_eq!(Quaternion::multiply_base('r', 'k'), SignedCoefficient { c: 1f64, d: 'k' });
+
+        assert_eq!(Quaternion::multiply_base('i', 'r'), SignedCoefficient { c: 1f64, d: 'i' });
+        assert_eq!(Quaternion::multiply_base('i', 'i'), SignedCoefficient { c: -1f64, d: 'r' });
+        assert_eq!(Quaternion::multiply_base('i', 'j'), SignedCoefficient { c: 1f64, d: 'k' });
+        assert_eq!(Quaternion::multiply_base('i', 'k'), SignedCoefficient { c: -1f64, d: 'j' });
+
+        assert_eq!(Quaternion::multiply_base('j', 'r'), SignedCoefficient { c: 1f64, d: 'j' });
+        assert_eq!(Quaternion::multiply_base('j', 'i'), SignedCoefficient { c: -1f64, d: 'k' });
+        assert_eq!(Quaternion::multiply_base('j', 'j'), SignedCoefficient { c: -1f64, d: 'r' });
+        assert_eq!(Quaternion::multiply_base('j', 'k'), SignedCoefficient { c: 1f64, d: 'i' });
+
+        assert_eq!(Quaternion::multiply_base('k', 'r'), SignedCoefficient { c: 1f64, d: 'k' });
+        assert_eq!(Quaternion::multiply_base('k', 'i'), SignedCoefficient { c: 1f64, d: 'j' });
+        assert_eq!(Quaternion::multiply_base('k', 'j'), SignedCoefficient { c: -1f64, d: 'i' });
+        assert_eq!(Quaternion::multiply_base('k', 'k'), SignedCoefficient { c: -1f64, d: 'r' });
+    }
 }
 
 #[derive(Debug)]
@@ -38,6 +61,19 @@ struct Quaternion {
     j: f64,
     k: f64,
 }
+
+#[derive(Debug)]
+struct SignedCoefficient {
+    c: f64,
+    d: char,
+}
+
+impl PartialEq<SignedCoefficient> for SignedCoefficient {
+    fn eq(&self, other: &SignedCoefficient) -> bool {
+        self.c == other.c && self.d == other.d
+    }
+}
+
 
 impl Quaternion {
     fn parse(input: &str) -> Vec<Quaternion> {
@@ -87,6 +123,18 @@ impl Quaternion {
         }
 
         q
+    }
+
+    fn multiply_base(a: char, b: char) -> SignedCoefficient {
+        if a == 'r' { return SignedCoefficient { c: 1f64, d: b }; }
+        if b == 'r' { return SignedCoefficient { c: 1f64, d: a }; }
+        if a == b { return SignedCoefficient { c: -1f64, d: 'r' }; }
+        let diff = u32::from(a) as i32 - u32::from(b) as i32;
+
+        SignedCoefficient {
+            c: (if diff > 0 { -1f64 } else { 1f64 }) * (if (diff + 2i32) % 2 == 0 { -1f64 } else { 1f64 }),
+            d: vec!['i', 'j', 'k'].iter().find(|&&e| e != a && e != b).unwrap().to_owned(),
+        }
     }
 }
 

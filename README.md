@@ -1,4 +1,5 @@
 [![Node.js CI](https://github.com/gustawdaniel/codingame-quaternion-multiplication/actions/workflows/node.js.yml/badge.svg)](https://github.com/gustawdaniel/codingame-quaternion-multiplication/actions/workflows/node.js.yml)
+[![Rust](https://github.com/gustawdaniel/codingame-quaternion-multiplication/actions/workflows/rust.yml/badge.svg)](https://github.com/gustawdaniel/codingame-quaternion-multiplication/actions/workflows/rust.yml)
 
 # Quaternion Multiplication
 
