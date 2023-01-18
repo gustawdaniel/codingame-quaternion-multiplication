@@ -66,6 +66,12 @@ describe('quaternion', () => {
         expect(res.k).toEqual(2);
     })
 
+    it('format coefficient', () => {
+       expect(Quaternion.formatCoefficient('i', 20)).toEqual('20i');
+       expect(Quaternion.formatCoefficient('i', 1)).toEqual('i');
+       expect(Quaternion.formatCoefficient('', 0)).toEqual('0');
+    });
+
     it('format', () => {
         expect((new Quaternion([]).format())).toEqual('0');
         expect((new Quaternion(['1']).format())).toEqual('1');
@@ -75,7 +81,7 @@ describe('quaternion', () => {
 
     })
 
-    it('e2e medium', () => {
+    it('e2e', () => {
         const cases = [
             {
                 in: '(i+j)(k)',

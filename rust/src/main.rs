@@ -1,9 +1,10 @@
 use std::io;
 use regex::Regex;
+use std::fmt;
 
 #[cfg(test)]
 mod tests {
-    use crate::{Quaternion, SignedCoefficient};
+    use crate::{Quaternion, SignedCoefficient, Case};
 
     #[test]
     fn simple_parse() {
@@ -62,7 +63,7 @@ mod tests {
             r: 1f64,
             i: 0f64,
             j: 0f64,
-            k: 0f64
+            k: 0f64,
         })
     }
 
@@ -75,9 +76,57 @@ mod tests {
             r: -2f64,
             i: 2f64,
             j: 2f64,
-            k: 2f64
+            k: 2f64,
         })
     }
+
+    #[test]
+    fn format_coefficient() {
+        assert_eq!(Quaternion::format_coefficient('i', 20f64), String::from("20i"));
+        assert_eq!(Quaternion::format_coefficient('i', 1f64), String::from("i"));
+        assert_eq!(Quaternion::format_coefficient(' ', 0f64), String::from("0"));
+    }
+
+    #[test]
+    fn format() {
+        assert_eq!(format!("{}", Quaternion::new(vec![])), String::from("0"));
+        assert_eq!(format!("{}", Quaternion::new(vec![String::from("1")])), String::from("1"));
+        assert_eq!(format!("{}", Quaternion::new(vec![String::from("i"), String::from("1")])), String::from("i+1"));
+        assert_eq!(format!("{}", Quaternion::new(vec![String::from("i"), String::from("-3.4j"), String::from("1")])), String::from("i-3.4j+1"));
+        assert_eq!(format!("{}", Quaternion::new(vec![String::from("j"), String::from("k")])), String::from("j+k"));
+    }
+
+    #[test]
+    fn e2e() {
+        let cases: Vec<Case> = vec![
+            Case {
+                input: String::from("(i+j)(k)"),
+                output: String::from("i-j"),
+            },
+            Case {
+                input: String::from("(i+j+20)(j-9)"),
+                output: String::from("-9i+11j+k-181"),
+            },
+            Case {
+                input: String::from("(10i)(10j-k+1)(-99i+j-10k+7)(4)"),
+                output: String::from("-520i-38920j+6800k+7920"),
+            },
+            Case {
+                input: String::from("(i+j+k+1)(i+2j+4k+8)(i+3j+9k+27)(i+j+8k+8)(i-j+k-10)(99i-j+k-1)(k)(j)(i)(3)"),
+                output: String::from("11415288i-8751432j-5206896k+9766704"),
+            }
+        ];
+        for c in cases {
+            let qs = Quaternion::parse(&c.input[..]);
+            let out = qs.into_iter().reduce(|p, n| p.multiply(n)).unwrap();
+            assert_eq!(format!("{}", out), c.output);
+        }
+    }
+}
+
+struct Case {
+    input: String,
+    output: String,
 }
 
 #[derive(Debug)]
@@ -200,6 +249,55 @@ impl Quaternion {
         }
         res
     }
+
+    fn format_coefficient(t: char, value: f64) -> String {
+        let out = if f64::abs(value) == 1f64 {
+            if f64::signum(value) == 1f64 {
+                String::from("") + &t.to_string()[..].trim()
+            } else {
+                String::from("-") + &t.to_string()[..].trim()
+            }
+        } else {
+            format!("{}", value) + &t.to_string()[..].trim()
+        };
+
+        match Regex::new(r"[\dijk]$").unwrap().captures(&out[..]) {
+            Some(_) => out,
+            None => out + "1"
+        }
+    }
+}
+
+impl fmt::Display for Quaternion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut out: Vec<String> = vec![];
+        if self.i != 0f64 {
+            out.push(Quaternion::format_coefficient('i', self.i))
+        }
+        if self.j != 0f64 {
+            out.push(Quaternion::format_coefficient('j', self.j))
+        }
+        if self.k != 0f64 {
+            out.push(Quaternion::format_coefficient('k', self.k))
+        }
+        if self.r != 0f64 {
+            out.push(Quaternion::format_coefficient(' ', self.r))
+        }
+
+        let out = out.into_iter().reduce(
+            |p, n| format!(
+                "{}{}",
+                p.clone(),
+                if p.len() > 0 && Quaternion::get_coefficient(&"", n.replace("i", "").replace("j", "").replace("k", "")) > 0f64 {
+                    format!("{}{}", "+", n)
+                } else {
+                    n
+                }
+            )
+        );
+
+        write!(f, "{}", out.unwrap_or(String::from("0")))
+    }
 }
 
 fn main() {
@@ -207,7 +305,9 @@ fn main() {
     io::stdin().read_line(&mut input_line).unwrap();
     let expr = input_line.trim_matches('\n').to_string();
 
+    println!("{:?}", Quaternion::format_coefficient('i', 1f64));
+
     for res in Quaternion::parse(&expr) {
-        println!("{:?}", res);
+        println!("{:?} - {}", res, res);
     }
 }

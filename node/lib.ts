@@ -66,7 +66,9 @@ export class Quaternion {
     }
 
     static formatCoefficient(type: Base | '', value: number) {
-        const out = `${Math.abs(value) === 1 ? (Math.sign(value) === 1 ? '' : '-') : value}${type}`;
+        const out = `${Math.abs(value) === 1 ? (
+            Math.sign(value) === 1 ? '' : '-'
+        ) : value}${type}`;
         return /[\dijk]$/.test(out) ? out : `${out}1`;
     }
 
