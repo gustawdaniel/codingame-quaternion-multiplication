@@ -4,7 +4,8 @@ use std::fmt;
 
 #[cfg(test)]
 mod tests {
-    use crate::{Quaternion, SignedCoefficient, Case};
+    use crate::{Quaternion, SignedCoefficient};
+
 
     #[test]
     fn simple_parse() {
@@ -98,6 +99,11 @@ mod tests {
 
     #[test]
     fn e2e() {
+        struct Case {
+            input: String,
+            output: String,
+        }
+
         let cases: Vec<Case> = vec![
             Case {
                 input: String::from("(i+j)(k)"),
@@ -114,7 +120,7 @@ mod tests {
             Case {
                 input: String::from("(i+j+k+1)(i+2j+4k+8)(i+3j+9k+27)(i+j+8k+8)(i-j+k-10)(99i-j+k-1)(k)(j)(i)(3)"),
                 output: String::from("11415288i-8751432j-5206896k+9766704"),
-            }
+            },
         ];
         for c in cases {
             let qs = Quaternion::parse(&c.input[..]);
@@ -124,10 +130,6 @@ mod tests {
     }
 }
 
-struct Case {
-    input: String,
-    output: String,
-}
 
 #[derive(Debug)]
 struct Quaternion {
@@ -305,9 +307,7 @@ fn main() {
     io::stdin().read_line(&mut input_line).unwrap();
     let expr = input_line.trim_matches('\n').to_string();
 
-    println!("{:?}", Quaternion::format_coefficient('i', 1f64));
-
-    for res in Quaternion::parse(&expr) {
-        println!("{:?} - {}", res, res);
-    }
+    let qs = Quaternion::parse(&expr);
+    let out = qs.into_iter().reduce(|p, n| p.multiply(n)).unwrap();
+    println!("{}", out);
 }
